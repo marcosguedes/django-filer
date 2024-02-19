@@ -7,7 +7,15 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 import easy_thumbnails.utils
-from easy_thumbnails.VIL import Image as VILImage
+
+SVG_SUPPORT = True
+try:
+    from easy_thumbnails.VIL import Image as VILImage
+except Exception:
+    SVG_SUPPORT = False
+    class VILImage(object):
+        pass
+
 from PIL.Image import MAX_IMAGE_PIXELS
 
 from .. import settings as filer_settings
@@ -110,7 +118,10 @@ class BaseImage(File):
                     imgfile = self.file_ptr.file
                 imgfile.seek(0)
                 if self.mime_type == 'image/svg+xml':
-                    self._width, self._height = VILImage.load(imgfile).size
+                    if SVG_SUPPORT:
+                        self._width, self._height = VILImage.load(imgfile).size
+                    else:
+                        self._width, self._height = (0,0)
                     self._transparent = True
                 else:
                     pil_image = PILImage.open(imgfile)
